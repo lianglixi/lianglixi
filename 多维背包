@@ -1,0 +1,225 @@
+
+#include "stdafx.h"
+#include <stdio.h>
+#include <stdlib.h>
+
+int bag[64][6];
+
+int value[6];
+
+int device[10][6] = { { 8,12,13,64,22,41 },//widget初始化物品的值
+                    { 8, 12, 13, 75 ,22 ,41 },
+                    { 3, 6, 4, 18 ,6, 4 } ,
+                    { 5, 10, 8, 32, 6, 12 },
+                    { 5, 13, 8, 42, 6 ,20 },
+                    { 5, 13, 8, 48, 6, 20 },
+                    { 0, 0, 0,0, 8,0 },
+                    { 3, 0, 4,0, 8,0 },
+                    { 3, 2, 4,0, 8,4 },
+                    { 3, 2, 4,8, 8,4 } };
+
+int restrain[10];//约束，维度上限
+
+int x[] = { 0,0,0,0,0,0 };//初始化最优方案六个物品的价值
+
+int result[10] = { 0,0,0,0,0,0,0,0,0,0 };//初始化维度上限
+
+int outBag[6] = { 0,0,0,0,0,0 };//输出最优的结果
+
+int Maxmum = 0;//
+
+//二进制数据转换
+int* IntToBiary(int num);
+//创建背包数组
+void createBag();
+//初始化输入物品属性价格
+void initBagData(void);
+//清除缓存
+void ClearBag(void);
+
+int main()
+{
+	initBagData();//初始化数据
+
+	createBag();//创建背包
+	for (int i = 0; i < 64;i++)
+	{
+		int sumValue = 0;
+		ClearBag();//先清除之前的缓存，避免脏数据
+		int n = 0;
+		for (int j = 0; j < 10;j++)
+		{
+			for (int k = 0; k < 6;k++)
+			{
+				if (bag[i][k] == 1)//遍历，若背包的值为1，将约束条件的值存入结果中
+				{
+					result[j] += device[j][k];
+				}
+				else if (bag[i][j] == 0)//若无，则置为0
+				{
+					result[j] += 0;
+				}
+			}
+		}
+		if (result[0] < restrain[0] &&
+			result[1] < restrain[1] &&
+			result[2] < restrain[2] &&
+			result[3] < restrain[3] &&
+			result[4] < restrain[4] &&
+			result[5] < restrain[5] &&
+			result[6] < restrain[6] &&
+			result[7] < restrain[7] &&
+			result[8] < restrain[8] &&
+			result[9] < restrain[9]
+			)//对比结果和约束值，确定输出的背包的值
+		{
+			for (int k = 0;k < 6;k++)
+			{
+				if (bag[i][k] == 1)//遍历并判断背包是否有值
+				{
+					sumValue += value[k];//将选取的物品的值加入总和中
+					outBag[k] = 1;
+				}
+				else
+				{
+					outBag[k] = 0;
+				}
+			}
+		}
+		else
+		{
+			sumValue = 0;
+		}
+		if (Maxmum < sumValue)//判断得出的总和的值是否超过当前最大值
+		{
+			Maxmum = sumValue;//若大于，则重置最大值为现在总和的值以及最优方案 
+			x[0] = outBag[0];
+			x[1] = outBag[1];
+			x[2] = outBag[2];
+			x[3] = outBag[3];
+			x[4] = outBag[4];
+			x[5] = outBag[5];
+		}
+	}
+	printf("产品的价格为：\n");
+	for (int i = 0;i < 6;i++)
+	{
+		printf("  %d\n", value[i]);
+	}
+
+	printf("最优方案为：%d %d %d %d %d %d \n", x[0], x[1], x[2], x[3], x[4], x[5]);
+	Maxmum = 0;
+
+	printf("最优方案的价格分别为：\n");
+	for (int i = 0;i < 6;i++)
+	{
+		if (x[i] == 1)//判断是否是最优解
+		{
+			printf("  %d  ", value[i]);
+			Maxmum += value[i];//并计算最优解为
+		}
+	}
+	printf("最优方案结果为：%d \n", Maxmum);
+	system("pause");
+	return 0;
+}
+
+void initBagData(void)
+{
+	memset(value, 0, sizeof(value[6]));//memset初始化函数，初始化选取物品的值
+
+	memset(device, 0, sizeof(device[10][6]));//初始化每个物品的约束值
+
+	memset(restrain, 0, sizeof(restrain[10]));//初始化约束值
+
+	printf("请依次输入物品价格： \n");
+	for (int i = 0;i < 6;i++)
+	{
+		scanf("%d", &value[i]);
+	}
+
+	printf("请依次输入物品的每个约束条件： \n");
+	for (int i = 0;i < 10;i++)
+	{
+		for (int j = 0; j < 6;j++)
+		{
+			scanf("%d", &(device[i][j]));
+		}
+	}
+
+	printf("请依次输入约束条件： \n");
+	for (int i = 0;i < 10;i++)
+	{
+		scanf("%d", &restrain[i]);
+	}
+
+	memset(x, 0, sizeof(x[6]));//初始化最优方案 
+
+	memset(outBag, 0, sizeof(outBag[6]));//输出背包初始化
+
+	Maxmum = 0;//初始化最大值
+
+}
+
+int* IntToBiary(int num)
+{
+	int b[16];
+	char* arrory = "";
+	int n = 0;
+	for (int n = 0; num; num >>= 1, n++)//遍历数组b，并num在数组右移后赋值
+	{
+		b[n] = num & 1;
+	}
+	return b;
+}
+
+void createBag()
+{
+	int b = 0;
+	memset(bag, 0, sizeof(bag));//初始化背包
+	for (int i = 0;i < 64;i++)
+	{
+		for (int j = 5, k = 0; j >= 0, k < 6;j--, k++)
+		{
+			int* arr = IntToBiary(i);//遍历背包，将二进制转换后的值存入背包中
+			bag[i][j] = arr[k];
+		}
+	}
+
+	for (int i = 0;i < 64;i++)
+	{
+		for (int j = 0; j < 6;j++)
+		{
+			if (bag[i][j] != 1)//遍历背包，若值不为1，则重置为0
+			{
+				bag[i][j] = 0;
+			}
+		}
+	}
+}
+
+//清空结果和输出值
+void ClearBag(void)
+{
+	result[0] = 0;
+	result[1] = 0;
+	result[2] = 0;
+	result[3] = 0;
+	result[4] = 0;
+	result[5] = 0;
+	result[6] = 0;
+	result[7] = 0;
+	result[8] = 0;
+	result[9] = 0;
+	result[10] = 0;
+
+	outBag[0] = 0;
+	outBag[1] = 0;
+	outBag[2] = 0;
+	outBag[3] = 0;
+	outBag[4] = 0;
+	outBag[5] = 0;
+}
+
+
+
